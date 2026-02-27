@@ -1,0 +1,39 @@
+# Code Logger backend + Qdrant. Portable for any system (Windows/macOS/Linux).
+# Usage: docker-compose up -d
+# API: http://localhost:5000  Qdrant: http://localhost:6333
+
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.7.4
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - QDRANT_URL=http://qdrant:6333
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+    depends_on:
+      qdrant:
+        condition: service_healthy
+
+volumes:
+  qdrant_storage: {}

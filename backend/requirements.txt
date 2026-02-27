@@ -1,0 +1,18 @@
+# Flask API
+flask>=3.0.0
+flask-cors>=4.0.0
+gunicorn>=21.0.0
+
+# Vector DB & Embeddings
+qdrant-client>=1.7.0
+google-generativeai>=0.3.0
+
+# LLM inference (Groq or Gemini)
+groq>=0.4.0
+requests>=2.31.0
+
+# Optional: offline embeddings (install for portable use without API keys)
+# sentence-transformers>=2.2.0
+
+# Utilities
+python-dotenv>=1.0.0

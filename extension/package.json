@@ -1,0 +1,58 @@
+{
+  "name": "code-logger",
+  "displayName": "Code Logger",
+  "description": "Offline AI-assisted code analysis and reasoning. Tracks code changes, vector embeddings, and contextual QA.",
+  "version": "0.1.0",
+  "publisher": "code-logger",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other", "Machine Learning"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "codeLogger.activate", "title": "Code Logger: Activate Logger" },
+      { "command": "codeLogger.deactivate", "title": "Code Logger: Deactivate Logger" },
+      { "command": "codeLogger.initialize", "title": "Code Logger: Initialize Logger" },
+      { "command": "codeLogger.terminate", "title": "Code Logger: Terminate Logger" },
+      { "command": "codeLogger.deleteLogs", "title": "Code Logger: Delete Logs" },
+      { "command": "codeLogger.deactivateMode", "title": "Code Logger: Deactivate Mode" },
+      { "command": "codeLogger.setModeCode", "title": "Code Logger: Set Mode — Code Logger" },
+      { "command": "codeLogger.setModeStructure", "title": "Code Logger: Set Mode — Structure Logger" },
+      { "command": "codeLogger.setModeFull", "title": "Code Logger: Set Mode — Full Code Logger" },
+      { "command": "codeLogger.answerQuery", "title": "Code Logger: Answer Query (Ask about codebase)" },
+      { "command": "codeLogger.summarizeCodebase", "title": "Code Logger: Summarize Codebase" }
+    ],
+    "configuration": {
+      "title": "Code Logger",
+      "properties": {
+        "codeLogger.apiUrl": {
+          "type": "string",
+          "default": "http://localhost:5000",
+          "description": "Backend API base URL"
+        },
+        "codeLogger.intervalSeconds": {
+          "type": "number",
+          "default": 60,
+          "description": "Interval (seconds) for periodic diff analysis"
+        },
+        "codeLogger.logDir": {
+          "type": "string",
+          "default": ".code-logger",
+          "description": "Relative folder for log files"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {}
+}

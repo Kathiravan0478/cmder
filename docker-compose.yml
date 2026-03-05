@@ -12,11 +12,6 @@ services:
       - qdrant_storage:/qdrant/storage
     environment:
       - QDRANT__SERVICE__GRPC_PORT=6334
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
 
   backend:
     build:
@@ -31,9 +26,10 @@ services:
       - QDRANT_URL=http://qdrant:6333
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - EMBEDDING_MODEL=models/text-embedding-004
+      - USE_GEMINI_EMBEDDING=false   
     depends_on:
-      qdrant:
-        condition: service_healthy
+      - qdrant
 
 volumes:
   qdrant_storage: {}

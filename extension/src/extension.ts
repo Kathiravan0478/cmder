@@ -224,12 +224,18 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("codeLogger.terminate", () => {
+    vscode.commands.registerCommand("codeLogger.terminate", async () => {
       state.active = false;
       state.mode = "none";
       stopInterval();
       state.fileHashes.clear();
-      vscode.window.showInformationMessage("Code Logger terminated.");
+      const cid = state.collectionId || getCollectionId();
+      try {
+        await apiPost("/api/terminate", { collection_id: cid });
+        vscode.window.showInformationMessage("Code Logger terminated (collection deleted).");
+      } catch {
+        vscode.window.showInformationMessage("Code Logger terminated (API unreachable; local state cleared).");
+      }
     })
   );
 

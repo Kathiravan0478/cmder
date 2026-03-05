@@ -1,6 +1,7 @@
 # Code Logger backend + Qdrant. Portable for any system (Windows/macOS/Linux).
 # Usage: docker-compose up -d
-# API: http://localhost:5000  Qdrant: http://localhost:6333
+# From host: API http://localhost:5001  Qdrant http://localhost:6333
+# (Port 5001 avoids macOS AirPlay using 5000.) Set CODE_LOGGER_API_URL=http://localhost:5001 for CLI/extension.
 
 services:
   qdrant:
@@ -12,13 +13,16 @@ services:
       - qdrant_storage:/qdrant/storage
     environment:
       - QDRANT__SERVICE__GRPC_PORT=6334
+    # No healthcheck: official image may not include curl. Backend waits and retries.
+    healthcheck:
+      disable: true
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "5000:5000"
+      - "5001:5000"
     environment:
       - FLASK_ENV=production
       - QDRANT_HOST=qdrant
@@ -26,10 +30,18 @@ services:
       - QDRANT_URL=http://qdrant:6333
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - GROQ_API_KEY=${GROQ_API_KEY:-}
-      - EMBEDDING_MODEL=models/text-embedding-004
-      - USE_GEMINI_EMBEDDING=false   
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-models/embedding-001}
+      - USE_GEMINI_EMBEDDING=${USE_GEMINI_EMBEDDING:-true}
+      - GROQ_MODEL=${GROQ_MODEL:-llama-3.1-8b-instant}
+      - GEMINI_LLM_MODEL=${GEMINI_LLM_MODEL:-gemini-1.5-flash}
     depends_on:
       - qdrant
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
 
 volumes:
   qdrant_storage: {}

@@ -1,8 +1,14 @@
 """Configuration for the code logger backend."""
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load .env from repo root (parent of backend/) when present (e.g. local dev)
+_env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+if _env_path.is_file():
+    load_dotenv(_env_path)
+else:
+    load_dotenv()
 
 
 class Config:
@@ -10,6 +16,7 @@ class Config:
     # API
     FLASK_ENV = os.getenv("FLASK_ENV", "development")
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-in-production")
+    FLASK_PORT = int(os.getenv("FLASK_PORT", os.getenv("PORT", "5001")))
 
     # Qdrant
     QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")

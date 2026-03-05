@@ -82,3 +82,14 @@ def collection_exists(collection_id: str) -> bool:
         return True
     except Exception:
         return False
+
+
+def delete_collection(collection_id: str) -> bool:
+    """Delete a collection (terminate logger for that codebase). Returns True if deleted."""
+    try:
+        client = get_qdrant_client()
+        client.get_collection(collection_id)
+        client.delete_collection(collection_name=collection_id)
+        return True
+    except Exception:
+        return False

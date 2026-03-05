@@ -7,6 +7,7 @@ from app.services.vector_store import (
     upsert_code_vectors,
     search_vectors,
     get_qdrant_client,
+    delete_collection as delete_collection_store,
 )
 from app.services.llm import summarize_with_llm
 
@@ -16,7 +17,23 @@ def register_routes(app):
 
     @app.route("/api/health", methods=["GET"])
     def health():
-        return jsonify({"status": "ok", "service": "code-logger-api"})
+        """Health check; includes Qdrant connectivity so Docker knows full stack is ready."""
+        try:
+            client = get_qdrant_client()
+            client.get_collections()
+            qdrant = "ok"
+        except Exception as e:
+            return jsonify({
+                "status": "degraded",
+                "service": "code-logger-api",
+                "qdrant": "error",
+                "error": str(e),
+            }), 503
+        return jsonify({
+            "status": "ok",
+            "service": "code-logger-api",
+            "qdrant": qdrant,
+        })
 
     @app.route("/api/analyze-diff", methods=["POST"])
     def analyze_diff():
@@ -195,6 +212,35 @@ def register_routes(app):
                 "collection_id": collection_id,
                 "vector_size": vector_size,
                 "created": True,
+            })
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/delete-collection", methods=["POST"])
+    def delete_collection_route():
+        """Delete a collection (terminate logger for that codebase)."""
+        try:
+            data = request.get_json() or {}
+            collection_id = data.get("collection_id") or "default_repo"
+            deleted = delete_collection_store(collection_id)
+            return jsonify({
+                "collection_id": collection_id,
+                "deleted": deleted,
+            })
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/terminate", methods=["POST"])
+    def terminate():
+        """Terminate logger: delete collection and clear server-side state for that codebase."""
+        try:
+            data = request.get_json() or {}
+            collection_id = data.get("collection_id") or "default_repo"
+            deleted = delete_collection_store(collection_id)
+            return jsonify({
+                "collection_id": collection_id,
+                "terminated": True,
+                "collection_deleted": deleted,
             })
         except Exception as e:
             return jsonify({"error": str(e)}), 500

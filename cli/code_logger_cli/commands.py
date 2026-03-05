@@ -81,6 +81,28 @@ def cmd_summarize_codebase(collection_id=None):
     return r.json()
 
 
+def cmd_terminate(collection_id=None):
+    """Terminate logger: delete the vector collection for this codebase."""
+    collection_id = collection_id or get_collection_id()
+    r = api_post("/api/terminate", json_data={"collection_id": collection_id})
+    r.raise_for_status()
+    print(json.dumps(r.json(), indent=2))
+    return r.json()
+
+
+def cmd_activate(cwd=None):
+    """Activate logger: ensure collection exists (initialize if needed). Use with IDE or analyze-diff."""
+    cwd = cwd or os.getcwd()
+    cid = cmd_init(cwd)
+    print("Logger activated. Collection:", cid)
+    print("Run analyze-diff or use the IDE extension to log changes.")
+
+
+def cmd_deactivate():
+    """Deactivate logger (CLI has no daemon; this is a no-op with message)."""
+    print("Logger deactivated (CLI has no running daemon). Use 'terminate' to delete the collection.")
+
+
 def cmd_delete_logs(log_dir=None):
     log_dir = log_dir or os.path.join(os.getcwd(), ".code-logger")
     if not os.path.isdir(log_dir):
@@ -103,6 +125,10 @@ def main():
 
     sub.add_parser("health", help="Check API health")
     sub.add_parser("init", help="Initialize logger / create collection")
+    p_term = sub.add_parser("terminate", help="Terminate logger (delete collection)")
+    p_term.add_argument("--collection", default=None, help="Collection ID")
+    sub.add_parser("activate", help="Activate logger (init collection)")
+    sub.add_parser("deactivate", help="Deactivate logger (no-op in CLI)")
     p_analyze = sub.add_parser("analyze-diff", help="Analyze code diff (file old new)")
     p_analyze.add_argument("file_path", help="File path")
     p_analyze.add_argument("--old", required=True, help="Old content or path to file")
@@ -127,7 +153,7 @@ def main():
         return
 
     base = get_api_base()
-    if args.command != "delete-logs" and args.command != "health":
+    if args.command not in ("delete-logs", "deactivate", "health"):
         try:
             api_get("/api/health").raise_for_status()
         except Exception as e:
@@ -138,6 +164,12 @@ def main():
         cmd_health()
     elif args.command == "init":
         cmd_init()
+    elif args.command == "terminate":
+        cmd_terminate(collection_id=getattr(args, "collection", None))
+    elif args.command == "activate":
+        cmd_activate()
+    elif args.command == "deactivate":
+        cmd_deactivate()
     elif args.command == "analyze-diff":
         old_val = args.old
         new_val = args.new
